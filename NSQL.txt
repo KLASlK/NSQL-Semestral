@@ -1,0 +1,9 @@
+Podmínkou získání zápočtu je zpracování seminární práce - návrh, vytvoření a pilotní využití NoSQL databáze ve zvoleném distribuovaném databázovém systému.
+
+Potřebuješ webovku, ve který používáš buď MongoDB a Redis, nebo jenom Neo4J (N4J na sociální sítě/pokud je tam hodně relací, jinak spíš Mongo), nebo jinou NSQL databázi
+
+Potřebuješ tam u těch databází mít 3/4 následujících operací:
+- Create
+- Edit
+- Find
+- Delete
