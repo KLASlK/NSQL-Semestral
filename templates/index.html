@@ -7,6 +7,17 @@
 {% block body %}
 <div class="container">
   <h1 style="margin-bottom: 20px;">NSQL Semestral - Social media platform</h1>
+
+  {% if request.endpoint != 'index' %}
+  <h2 class="display-4">Search Users</h2>
+  <form method="GET" action="/users" style="margin-bottom: 20px;">
+    <div class="mb-3">
+      <input type="text" class="form-control" name="search" placeholder="Username">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+  {% endif %}
+
   <h2 class="display-4">{% if request.endpoint == 'index' %} Friend {% else %} User {% endif %} List </h2>
   <ul class="list-group" style="margin-bottom: 10px;">
     {% for user in users %}

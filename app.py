@@ -30,10 +30,15 @@ def add_user():
     return render_template('add.html')
 
 # Read
-@app.route('/users')
+@app.route('/users', methods=['GET'])
 def user_list():
-    users = list(users_collection.find())
+    search_query = request.args.get('search', '')
+    if search_query:
+        users = list(users_collection.find({'username': {'$regex': search_query, '$options': 'i'}}))
+    else:
+        users = list(users_collection.find())
     return render_template('index.html', users=users)
+
 
 # Update
 @app.route('/edit/<user_id>', methods=['GET', 'POST'])
