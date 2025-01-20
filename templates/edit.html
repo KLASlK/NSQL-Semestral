@@ -18,6 +18,36 @@
       <label class="form-check-label" for="is_friend">Is Friend</label>
     </div>
 
+    <div class="form-group" style="margin-top: 20px;">
+      <h5>Current Friends:</h5>
+      {% if user.friend_names %}
+      <div class="form-check">
+        {% for friend in user.friend_names %}
+        <div>
+          <input type="checkbox" class="form-check-input" name="remove_friends" value="{{ friend }}">
+          <label class="form-check-label" for="remove_friends">{{ friend }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div>No friends to remove</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group" style="margin-top: 20px;">
+      <h5>Add Friends:</h5>
+      <div class="form-check">
+        {% for potential_friend in users %}
+        {% if potential_friend.username != user.username %}
+        <div>
+          <input type="checkbox" class="form-check-input" name="add_friends" value="{{ potential_friend._id }}">
+          <label class="form-check-label" for="add_friends">{{ potential_friend.username }}</label>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
     <button type="submit" class="btn btn-primary" style="margin-top: 5px;">Update</button>
   </form>
 
