@@ -11,6 +11,18 @@ users_collection = db['users']
 @app.route('/')
 def index():
     friends = list(users_collection.find({"is_friend": True}))
+    
+    # Get the friends' details using ObjectId lookup
+    for user in friends:
+        friend_names = []
+        if user.get('friends'):
+            # Retrieve friend details from the users collection
+            for friend_id in user['friends']:
+                friend = users_collection.find_one({'_id': ObjectId(friend_id)})
+                if friend:
+                    friend_names.append(friend['username'])
+        user['friend_names'] = friend_names  # Add the friend names list to the user data
+
     return render_template('index.html', users=friends)
 
 # Create
@@ -20,14 +32,46 @@ def add_user():
         username = request.form.get('username')
         email = request.form.get('email')
         is_friend = request.form.get('is_friend')
+        
         if is_friend:
             is_friend = True
         else:
             is_friend = False
+
+        # Add new user to the database
         if username and email:
-            users_collection.insert_one({'username': username, 'email': email, 'is_friend' : is_friend})
+            new_user = {
+                'username': username, 
+                'email': email, 
+                'is_friend': is_friend,
+                'friends': []  # Initialize the friends list as empty
+            }
+            new_user_id = users_collection.insert_one(new_user).inserted_id
+
+            # Get the selected friends from the form
+            selected_friends = request.form.getlist('friends')
+
+            # Add the new user to each friend's friend list
+            for friend_id in selected_friends:
+                friend = users_collection.find_one({'_id': ObjectId(friend_id)})
+                if friend:
+                    # Add the new user to the friend's friend list
+                    users_collection.update_one(
+                        {'_id': ObjectId(friend['_id'])},
+                        {'$addToSet': {'friends': new_user_id}}  # Using $addToSet to avoid duplicates
+                    )
+                    # Add the friend to the new user's friend list
+                    users_collection.update_one(
+                        {'_id': new_user_id},
+                        {'$addToSet': {'friends': ObjectId(friend['_id'])}}  # Using $addToSet to avoid duplicates
+                    )
+
         return redirect(url_for('index'))
-    return render_template('add.html')
+
+    # Retrieve users to display in the form
+    users = list(users_collection.find())
+    return render_template('add.html', users=users)
+
 
 # Read
 @app.route('/users', methods=['GET'])
@@ -37,6 +81,18 @@ def user_list():
         users = list(users_collection.find({'username': {'$regex': search_query, '$options': 'i'}}))
     else:
         users = list(users_collection.find())
+    
+    # Get the friends' names for each user
+    for user in users:
+        friend_names = []
+        if user.get('friends'):
+            # Retrieve friend details from the users collection
+            for friend_id in user['friends']:
+                friend = users_collection.find_one({'_id': ObjectId(friend_id)})
+                if friend:
+                    friend_names.append(friend['username'])
+        user['friend_names'] = friend_names  # Add the friend names list to the user data
+
     return render_template('index.html', users=users)
 
 
@@ -44,6 +100,19 @@ def user_list():
 @app.route('/edit/<user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
     user = users_collection.find_one({'_id': ObjectId(user_id)})
+
+    # Populate the friend names for the user
+    friend_names = []
+    if user.get('friends'):
+        for friend_id in user['friends']:
+            friend = users_collection.find_one({'_id': ObjectId(friend_id)})
+            if friend:
+                friend_names.append(friend['username'])
+    user['friend_names'] = friend_names  # Add the friend names list to the user data
+
+    # Fetch all users to show potential friends for adding
+    users = list(users_collection.find())
+
     if request.method == 'POST':
         new_username = request.form.get('username')
         new_email = request.form.get('email')
@@ -54,12 +123,52 @@ def edit_user(user_id):
             new_is_friend = False
 
         if new_username and new_email:
+            # Update user data
             users_collection.update_one(
                 {'_id': ObjectId(user_id)},
                 {'$set': {'username': new_username, 'email': new_email, 'is_friend': new_is_friend}}
             )
+
+            # Handle removing friends
+            remove_friends = request.form.getlist('remove_friends')
+            if remove_friends:
+                for friend_username in remove_friends:
+                    # Find the friend by username
+                    friend = users_collection.find_one({'username': friend_username})
+                    if friend:
+                        # Remove the user from the friend's friend list
+                        users_collection.update_one(
+                            {'_id': friend['_id']},
+                            {'$pull': {'friends': ObjectId(user_id)}}
+                        )
+                        # Remove the friend from the user's friend list
+                        users_collection.update_one(
+                            {'_id': ObjectId(user_id)},
+                            {'$pull': {'friends': ObjectId(friend['_id'])}}
+                        )
+
+            # Handle adding friends
+            add_friends = request.form.getlist('add_friends')
+            if add_friends:
+                for friend_id in add_friends:
+                    # Find the friend by ID
+                    friend = users_collection.find_one({'_id': ObjectId(friend_id)})
+                    if friend:
+                        # Add the user to the friend's friend list
+                        users_collection.update_one(
+                            {'_id': friend['_id']},
+                            {'$addToSet': {'friends': ObjectId(user_id)}}
+                        )
+                        # Add the friend to the user's friend list
+                        users_collection.update_one(
+                            {'_id': ObjectId(user_id)},
+                            {'$addToSet': {'friends': ObjectId(friend['_id'])}}
+                        )
+
         return redirect(url_for('index'))
-    return render_template('edit.html', user=user)
+
+    return render_template('edit.html', user=user, users=users)
+
 
 # Delete
 @app.route('/delete/<user_id>', methods=['POST'])
