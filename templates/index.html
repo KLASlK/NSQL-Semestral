@@ -22,9 +22,25 @@
   <ul class="list-group" style="margin-bottom: 10px;">
     {% for user in users %}
     <li
-      class="list-group-item {% if user.is_friend %} list-group-item-success {% endif %} justify-content-between align-items-center"
-      style="display: flex;">
-      {{ user.username }} ({{ user.email }})
+      class="list-group-item {% if user.is_friend %} list-group-item-success {% endif %} d-flex justify-content-between align-items-start">
+      <div class="d-flex flex-column">
+        <span><strong>{{ user.username }}</strong> ({{ user.email }})</span>
+
+        <div><strong>Friends:</strong>
+          {% if user.friend_names %}
+          <div>
+            {% for friend in user.friend_names %}
+            {{ friend }}
+            {% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          No friends
+          {% endif %}
+        </div>
+
+      </div>
+
       <div>
         <form method="GET" action="/edit/{{ user._id }}" style="display:inline;">
           <button type="submit" class="btn btn-primary btn-sm">Edit</button>
