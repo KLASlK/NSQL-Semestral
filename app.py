@@ -94,65 +94,56 @@ def user_list():
 def edit_user(user_id):
     user = users_collection.find_one({'_id': ObjectId(user_id)})
 
-    # Populate the friend names for the user
     friend_names = []
     if user.get('friends'):
         for friend_id in user['friends']:
             friend = users_collection.find_one({'_id': ObjectId(friend_id)})
             if friend:
                 friend_names.append(friend['username'])
-    user['friend_names'] = friend_names  # Add the friend names list to the user data
 
-    # Fetch all users to show potential friends for adding
+    user['friend_names'] = friend_names
+
     users = list(users_collection.find())
 
     if request.method == 'POST':
         new_username = request.form.get('username')
         new_email = request.form.get('email')
         new_is_friend = request.form.get('is_friend')
+
         if new_is_friend:
             new_is_friend = True
         else:
             new_is_friend = False
 
         if new_username and new_email:
-            # Update user data
             users_collection.update_one(
                 {'_id': ObjectId(user_id)},
                 {'$set': {'username': new_username, 'email': new_email, 'is_friend': new_is_friend}}
             )
 
-            # Handle removing friends
             remove_friends = request.form.getlist('remove_friends')
             if remove_friends:
                 for friend_username in remove_friends:
-                    # Find the friend by username
                     friend = users_collection.find_one({'username': friend_username})
                     if friend:
-                        # Remove the user from the friend's friend list
                         users_collection.update_one(
                             {'_id': friend['_id']},
                             {'$pull': {'friends': ObjectId(user_id)}}
                         )
-                        # Remove the friend from the user's friend list
                         users_collection.update_one(
                             {'_id': ObjectId(user_id)},
                             {'$pull': {'friends': ObjectId(friend['_id'])}}
                         )
 
-            # Handle adding friends
             add_friends = request.form.getlist('add_friends')
             if add_friends:
                 for friend_id in add_friends:
-                    # Find the friend by ID
                     friend = users_collection.find_one({'_id': ObjectId(friend_id)})
                     if friend:
-                        # Add the user to the friend's friend list
                         users_collection.update_one(
                             {'_id': friend['_id']},
                             {'$addToSet': {'friends': ObjectId(user_id)}}
                         )
-                        # Add the friend to the user's friend list
                         users_collection.update_one(
                             {'_id': ObjectId(user_id)},
                             {'$addToSet': {'friends': ObjectId(friend['_id'])}}
