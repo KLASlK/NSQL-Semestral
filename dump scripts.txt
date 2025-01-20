@@ -1,0 +1,3 @@
+mongodump --db socialApp --out ./dump
+
+mongorestore --db socialApp ./dump/socialApp

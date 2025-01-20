@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Edit User</title>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <h2 class="display-4">Add New User</h2>
+  <form method="POST" action="/add" style="margin-bottom: 20px;">
+    <div class="mb-3">
+      <input type="text" class="form-control" name="username" placeholder="Username" required>
+      <input type="email" class="form-control" name="email" placeholder="Email" required>
+      <label for="checkbox">Is your Friend</label>
+      <input type="checkbox" class="form-check-input" name="is_friend">
+    </div>
+    <button type="submit" class="btn btn-primary">Add to Database</button>
+  </form>
+</div>
+{% endblock %}

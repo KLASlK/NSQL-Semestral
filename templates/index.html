@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>Simple Social Media</title>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <h1 style="margin-bottom: 20px;">NSQL Semestral - Social media platform</h1>
+  <h2 class="display-4">{% if request.endpoint == 'index' %} Friend {% else %} User {% endif %} List </h2>
+  <ul class="list-group" style="margin-bottom: 10px;">
+    {% for user in users %}
+    <li
+      class="list-group-item {% if user.is_friend %} list-group-item-success {% endif %} justify-content-between align-items-center"
+      style="display: flex;">
+      {{ user.username }} ({{ user.email }})
+      <div>
+        <form method="GET" action="/edit/{{ user._id }}" style="display:inline;">
+          <button type="submit" class="btn btn-primary btn-sm">Edit</button>
+        </form>
+        <form method="POST" action="/delete/{{ user._id }}" style="display:inline;">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+</div>
+{% endblock %}
